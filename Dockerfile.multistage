@@ -1,0 +1,24 @@
+FROM golang:1.8 as build
+
+RUN mkdir /go/src/cloudnative
+RUN chdir /go/src/cloudnative
+WORKDIR /go/src/cloudnative
+COPY . .
+COPY ./api ./api
+RUN go get -d -v ./...
+RUN go get github.com/stretchr/testify
+RUN go test --cover -v ./...
+RUN go build -v -o cloudnative
+
+FROM alpine:3.4
+MAINTAINER 	Viktor Farcic <viktor@farcic.com>
+
+RUN mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
+
+EXPOSE 8080
+WORKDIR /go/src/cloudnative
+CMD ["cloudnative"]
+
+COPY --from=build /go/src/cloudnative/cloudnative /usr/local/bin/cloudnative
+RUN chmod +x /usr/local/bin/cloudnative
+

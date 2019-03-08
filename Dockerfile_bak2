@@ -1,0 +1,19 @@
+FROM golang:1.7.4
+MAINTAINER Tony McClay
+
+ENV SOURCES /go/src/github.com/PackPublishing/Cloud-Native-Go/
+
+# Set the working directory to /app
+WORKDIR /go/src/github.com/PackPublishing/cloud-native-go/
+
+
+COPY . /go/src/github.com/PackPublishing/cloud-native-go/
+
+RUN cd /go/src/github.com/PackPublishing/cloud-native-go/
+
+RUN CGO_ENABLED=0 go install
+
+ENV PORT=8080
+EXPOSE 8080
+
+ENTRYPOINT Cloud-Native-Go
