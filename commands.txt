@@ -1,0 +1,16 @@
+
+
+#  Build the Image - Multistage Docker File go 1.8  Alpine Linux alpine:3.4
+docker image build -f Dockerfile.multistage -t cloudnative .
+
+# Tag Image for Local Registry
+docker image tag cloudnative localhost:5000/cloudnative
+
+# Push the image to the Local Registry
+$ docker image push localhost:5000/cloudnative
+
+# Run the Container
+$ docker container run --restart=always -d --name tonycloudnative -p 9090:8080 localhost:5000/cloudnative
+
+
+
