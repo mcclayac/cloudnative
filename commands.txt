@@ -10,7 +10,11 @@ docker image tag cloudnative localhost:5000/cloudnative
 $ docker image push localhost:5000/cloudnative
 
 # Run the Container
-$ docker container run --restart=always -d --name tonycloudnative -p 9090:8080 localhost:5000/cloudnative
+$ docker container run -d --name tonycloudnative -p 9090:8080 --rm localhost:5000/cloudnative
+$ docker container run --restart=always -d --name tonycloudnative -p 9090:8080 --rm localhost:5000/cloudnative
 
+$ docker container stop cloudnative
 
+$ docker container rm -f cloudnative
 
+$  curl localhost:9090/
