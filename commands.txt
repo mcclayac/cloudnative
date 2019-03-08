@@ -6,15 +6,19 @@ docker image build -f Dockerfile.multistage -t cloudnative .
 # Tag Image for Local Registry
 $ docker image tag cloudnative localhost:5000/cloudnative
 $ docker image tag cloudnative localhost:5000/cloudnative:part2
-
+$ docker image tag cloudnative mcclayac/cloudnative:part2
+$ docker image tag cloudnative mcclayac/cloudnative:part2
 
 # Push the image to the Local Registry
 $ docker image push localhost:5000/cloudnative
 $ docker image push localhost:5000/cloudnative:part2
+$ docker image push mcclayac/cloudnative:part2
+
 
 # Run the Container
 $ docker container run -d --name tonycloudnative -p 9090:8080 --rm localhost:5000/cloudnative
 $ docker container run --restart=always -d --name tonycloudnative -p 9090:8080 --rm localhost:5000/cloudnative
+$ docker container run -d --name tonycloudnative -p 9090:8080 --rm localhost:5000/cloudnative
 
 $ docker container stop cloudnative
 
@@ -94,11 +98,26 @@ docker swarm leave --force
 # Curl Multiple Times
 #!/bin/bash
 COUNTER=0
-while [  $COUNTER -lt 30 ]; do
+while [  $COUNTER -lt 5 ]; do
+ echo The counter is $COUNTER
+ curl -4  http://localhost:9090
+ let COUNTER=COUNTER+1
+done
+
+COUNTER=0
+while [  $COUNTER -lt 5 ]; do
  echo The counter is $COUNTER
  curl -4  http://localhost:4040
  let COUNTER=COUNTER+1
 done
+
+
+# Start 4 Docker machines
+docker-machine start myvm1
+docker-machine start myvm2
+docker-machine start myvm3
+docker-machine start myvm4
+
 
 
 
@@ -114,6 +133,76 @@ To add a worker to this swarm, run the following command:
 To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
 
 
+# Leaves the swarm
+$ ssh myvm2 "docker swarm leave"
+$ ssh myvm3 "docker swarm leave"
+$ ssh myvm4 "docker swarm leave"
+
+#  Must force the first node to leave
+docker-machine ssh myvm1 "docker swarm leave -f"
+docker-machine ssh myvm2 "docker swarm leave"
+docker-machine ssh myvm3 "docker swarm leave"
+docker-machine ssh myvm4 "docker swarm leave"
+
+# Create first Node = swarm Manager Nodo
+docker-machine ssh myvm1 "docker swarm init --advertise-addr 192.168.99.100"
+
+$ docker-machine ssh myvm1 "docker swarm init --advertise-addr 192.168.99.100"
+Swarm initialized: current node (x21kkn1jg0mb5p3or3llg2hl0) is now a manager.
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-1nkbis1vx6k7tdyxe1l56f9gu3jbimeqek3maolfaxrtusgeqg-bvwb6tpmwgo0d3cii5vfdo060 192.168.99.100:2377
+
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+-------
+
+#  Add all ther servicer 2-4 to the Swarm
+docker-machine ssh myvm2 "docker swarm join --token SWMTKN-1-1nkbis1vx6k7tdyxe1l56f9gu3jbimeqek3maolfaxrtusgeqg-bvwb6tpmwgo0d3cii5vfdo060 192.168.99.100:2377"
+docker-machine ssh myvm3 "docker swarm join --token SWMTKN-1-1nkbis1vx6k7tdyxe1l56f9gu3jbimeqek3maolfaxrtusgeqg-bvwb6tpmwgo0d3cii5vfdo060 192.168.99.100:2377"
+docker-machine ssh myvm4 "docker swarm join --token SWMTKN-1-1nkbis1vx6k7tdyxe1l56f9gu3jbimeqek3maolfaxrtusgeqg-bvwb6tpmwgo0d3cii5vfdo060 192.168.99.100:2377"
+
+
+# Deploy to Swam
+$ docker stack deploy -c docker-compose.yml getstartedgolanglab
+
+# Display the service
+$ docker service ls
+ID                  NAME                      MODE                REPLICAS            IMAGE                        PORTS
+myxdkrsvm2vj        getstartedgolanglab_web   replicated          5/5                 mcclayac/cloudnative:part2   *:4040->8080/tcp
+
+#  SHow the process of the services
+$ docker service ps myxdkrsvm2vj
+ID                  NAME                        IMAGE                        NODE                DESIRED STATE       CURRENT STATE            ERROR               PORTS
+yyna5b5uhn02        getstartedgolanglab_web.1   mcclayac/cloudnative:part2   myvm2               Running             Running 20 seconds ago
+98wt1idckfx0        getstartedgolanglab_web.2   mcclayac/cloudnative:part2   myvm2               Running             Running 20 seconds ago
+mpuortyb8lcg        getstartedgolanglab_web.3   mcclayac/cloudnative:part2   myvm1               Running             Running 22 seconds ago
+io5flrvz7rux        getstartedgolanglab_web.4   mcclayac/cloudnative:part2   myvm2               Running             Running 20 seconds ago
+dozfrlc4bt42        getstartedgolanglab_web.5   mcclayac/cloudnative:part2   myvm1               Running             Running 22 seconds ago
+
+
+
+# un-Deploy to swam
+$ docker stack rm getstartedgolanglab
+
+
+# Start 4 Docker machines
+docker-machine stop myvm1
+docker-machine stop myvm2
+docker-machine stop myvm3
+docker-machine stop myvm4
+
+$ docker-machine ls
+NAME    ACTIVE   DRIVER       STATE     URL   SWARM   DOCKER    ERRORS
+myvm1   -        virtualbox   Stopped                 Unknown
+myvm2   -        virtualbox   Stopped                 Unknown
+myvm3   -        virtualbox   Stopped                 Unknown
+myvm4   -        virtualbox   Stopped                 Unknown
+
+
+------------------------
+# Disconnnect from machine
+$ eval $(docker-machine env -u)
 
 
 
