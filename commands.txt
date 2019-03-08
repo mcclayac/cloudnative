@@ -4,10 +4,13 @@
 docker image build -f Dockerfile.multistage -t cloudnative .
 
 # Tag Image for Local Registry
-docker image tag cloudnative localhost:5000/cloudnative
+$ docker image tag cloudnative localhost:5000/cloudnative
+$ docker image tag cloudnative localhost:5000/cloudnative:part2
+
 
 # Push the image to the Local Registry
 $ docker image push localhost:5000/cloudnative
+$ docker image push localhost:5000/cloudnative:part2
 
 # Run the Container
 $ docker container run -d --name tonycloudnative -p 9090:8080 --rm localhost:5000/cloudnative
@@ -17,4 +20,134 @@ $ docker container stop cloudnative
 
 $ docker container rm -f cloudnative
 
+
 $  curl localhost:9090/
+
+# Init the swam
+$ docker swarm init
+Swarm initialized: current node (afs7vej7u7uxzeq89bkxil2j2) is now a manager.
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-1ecl04f44uif2esdemy9vgc7yrjjk17vzefc5hrd2zerhpwvbi-19p3hvi4757510smjg6fq3cdv 192.168.65.3:2377
+
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+
+
+# Deploy to Swam
+$ docker stack deploy -c docker-compose.yml getstartedgolanglab
+
+# List the service
+$ docker service ls
+
+#Take down the app and the swarm
+#Take the app down with docker stack rm:
+
+$ docker stack rm getstartedgolanglab
+
+#Take down the swarm.
+$ docker stack rm getstartedgolanglab
+$ docker stack rm getstartedgolanglab
+Removing service getstartedgolanglab_web
+Removing network getstartedgolanglab_webnet2
+
+
+$ docker swarm leave --force
+
+# curl getstartedgolanglab loaclhost:4040
+$ curl localhost:4040
+$ curl -4 localhost:4040
+Hello Cloud Native Go.  These Nytz V 1.0
+
+
+# List the specific service
+$ docker stack services getstartedgolanglab
+ID                  NAME                      MODE                REPLICAS            IMAGE                              PORTS
+ouz5f9528z27        getstartedgolanglab_web   replicated          5/5                 localhost:5000/cloudnative:part2   *:4040->8080/tcp
+
+
+#  List Services
+$ docker service ls
+ID                  NAME                      MODE                REPLICAS            IMAGE                              PORTS
+ouz5f9528z27        getstartedgolanglab_web   replicated          5/5                 localhost:5000/cloudnative:part2   *:4040->8080/tcp
+tyskdrcdnbf4        getstartedpythonlab_web   replicated          5/5                 mcclayac/get-started:part2         *:4000->80/tcp
+
+
+# List the running servers of the service
+$ docker service ps getstartedgolanglab_web
+ID                  NAME                        IMAGE                              NODE                    DESIRED STATE       CURRENT STATE            ERROR               PORTS
+ntxyr2ffpdxv        getstartedgolanglab_web.1   localhost:5000/cloudnative:part2   linuxkit-025000000001   Running             Running 12 minutes ago
+5jgmx8iyfv1z        getstartedgolanglab_web.2   localhost:5000/cloudnative:part2   linuxkit-025000000001   Running             Running 12 minutes ago
+meec2qvc9zv3        getstartedgolanglab_web.3   localhost:5000/cloudnative:part2   linuxkit-025000000001   Running             Running 12 minutes ago
+jwzort632rgw        getstartedgolanglab_web.4   localhost:5000/cloudnative:part2   linuxkit-025000000001   Running             Running 12 minutes ago
+avxf2bo7tvm5        getstartedgolanglab_web.5   localhost:5000/cloudnative:part2   linuxkit-025000000001   Running             Running 12 minutes ago
+
+# Take down the Server
+# Take down the app
+docker stack rm getstartedgolanglab_web
+
+
+
+# Take Down the Swam
+docker swarm leave --force
+
+# Curl Multiple Times
+#!/bin/bash
+COUNTER=0
+while [  $COUNTER -lt 30 ]; do
+ echo The counter is $COUNTER
+ curl -4  http://localhost:4040
+ let COUNTER=COUNTER+1
+done
+
+
+
+
+#  Init the swam
+$ docker swarm init
+Swarm initialized: current node (l7drx0914hgxoamxdxpxuoomg) is now a manager.
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-1ce15c2k6ytekw5y5elp98c9rsn70kc6c6pxdb9wvscuuviiia-c20m41i87byvpimgv61nu9iod 192.168.65.3:2377
+
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+
+
+
+
+
+---------------------------------------------------------------------------------
+
+Some commands to explore at this stage:
+
+docker build -t friendlyhello .  # Create image using this directory's Dockerfile
+docker run -p 4000:80 friendlyhello  # Run "friendlyname" mapping port 4000 to 80
+docker run -d -p 4000:80 friendlyhello         # Same thing, but in detached mode
+docker container ls                                # List all running containers
+docker container ls -a             # List all containers, even those not running
+docker container stop <hash>           # Gracefully stop the specified container
+docker container kill <hash>         # Force shutdown of the specified container
+docker container rm <hash>        # Remove specified container from this machine
+docker container rm $(docker container ls -a -q)         # Remove all containers
+docker image ls -a                             # List all images on this machine
+docker image rm <image id>            # Remove specified image from this machine
+docker image rm $(docker image ls -a -q)   # Remove all images from this machine
+docker login             # Log in this CLI session using your Docker credentials
+docker tag <image> username/repository:tag  # Tag <image> for upload to registry
+docker push username/repository:tag            # Upload tagged image to registry
+docker run username/repository:tag                   # Run image from a registry
+
+
+Some commands to explore at this stage:
+
+docker stack ls                                            # List stacks or apps
+docker stack deploy -c <composefile> <appname>  # Run the specified Compose file
+docker service ls                 # List running services associated with an app
+docker service ps <service>                  # List tasks associated with an app
+docker inspect <task or container>                   # Inspect task or container
+docker container ls -q                                      # List container IDs
+docker stack rm <appname>                             # Tear down an application
+docker swarm leave --force      # Take down a single node swarm from the manager
+
+
